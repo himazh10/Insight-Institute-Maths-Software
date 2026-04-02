@@ -22,11 +22,14 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
+/* FLOATING NAVIGATION BAR */
 .glass-nav {
-  background: rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: blur(20px) saturate(200%) !important;
-  -webkit-backdrop-filter: blur(20px) saturate(200%) !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.6) !important;
+  backdrop-filter: blur(30px) saturate(220%) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(220%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 999px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
 }
 
 /* PERSISTENT GLOBAL BACKGROUND */
@@ -39,50 +42,50 @@ body {
 
 .ambient-orb {
   position: absolute;
-  width: 60vw;
-  height: 60vw;
-  filter: blur(120px);
-  opacity: 0.15;
+  width: 70vw;
+  height: 70vw;
+  filter: blur(140px);
+  opacity: 0.2;
   border-radius: 50%;
   pointer-events: none;
 }
 
 .orb-1 {
-  top: -20%;
-  left: -10%;
-  background: radial-gradient(circle, #3b82f6, transparent 70%);
+  top: -25%;
+  left: -15%;
+  background: radial-gradient(circle, #3b82f6, transparent 75%);
 }
 
 .orb-2 {
-  bottom: -20%;
-  right: -10%;
-  background: radial-gradient(circle, #9333ea, transparent 70%);
+  bottom: -25%;
+  right: -15%;
+  background: radial-gradient(circle, #9333ea, transparent 75%);
 }
 
 .grid-overlay {
   position: absolute;
   inset: 0;
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 80px 80px;
   mask-image: radial-gradient(circle at 50% 50%, black, transparent 90%);
   pointer-events: none;
 }
 
 /* Premium Components */
 .premium-input {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
   color: white;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .premium-input:focus {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.05);
   border-color: #3b82f6;
-  box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
   outline: none;
 }
 
@@ -90,13 +93,18 @@ body {
   background: #ffffff;
   color: #000000;
   font-weight: 800;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 10px 30px rgba(255, 255, 255, 0.1);
+  transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: 0 10px 40px rgba(255, 255, 255, 0.1);
 }
 
 .premium-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 40px rgba(59, 130, 246, 0.3);
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(59, 130, 246, 0.4);
   background: #3b82f6;
   color: #ffffff;
+}
+
+/* Text glow for branding */
+.branding-glow {
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.2), 0 0 60px rgba(59, 130, 246, 0.2);
 }
