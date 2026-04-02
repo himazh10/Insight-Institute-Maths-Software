@@ -2,28 +2,79 @@
 
 import { motion } from "framer-motion";
 import { Plus, Table, LogOut, ChevronRight, FileText, Database, CheckCircle2, Loader2, ExternalLink } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { exportToGoogleDocs, syncToGoogleSheets } from "@/actions/export";
+import { getSchoolData, submitAttendance } from "@/actions/submit";
+import { logout } from "@/actions/login";
 
 export default function SchoolDashboard() {
   const [activeTab, setActiveTab] = useState<"submit" | "view">("submit");
   const [exporting, setExporting] = useState<string | null>(null);
   const [exportResult, setExportResult] = useState<{ url: string; type: string } | null>(null);
+  const [school, setSchool] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    const data = await getSchoolData();
+    setSchool(data);
+    setLoading(false);
+  };
 
   const handleGoogleExport = async (type: "docs" | "sheets") => {
+    if (!school) return;
     setExporting(type);
     setExportResult(null);
     
-    // Using a placeholder school ID for the demo
     const result = type === "docs" 
-      ? await exportToGoogleDocs("demo-id") 
-      : await syncToGoogleSheets("demo-id");
+      ? await exportToGoogleDocs(school.id) 
+      : await syncToGoogleSheets(school.id);
 
     if (result.success) {
       setExportResult({ url: result.url as string, type });
     }
     setExporting(null);
   };
+
+  const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSubmitting(true);
+    const formData = new FormData(e.currentTarget);
+    
+    try {
+      await submitAttendance(formData);
+      await fetchData(); // Refresh local data
+      setActiveTab("view");
+      (e.target as HTMLFormElement).reset();
+    } catch (err) {
+      alert("Submission failed. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <Loader2 className="animate-spin text-blue-500" size={48} />
+      </div>
+    );
+  }
+
+  if (!school) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black text-white">
+        <div className="text-center space-y-4">
+          <h1 className="text-2xl font-bold">Session Expired</h1>
+          <button onClick={() => logout()} className="premium-btn px-8 py-3 rounded-xl">Back to Login</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen text-white flex relative overflow-hidden">
@@ -82,7 +133,10 @@ export default function SchoolDashboard() {
           </button>
         </div>
 
-        <button className="flex items-center space-x-4 px-6 py-4 text-red-500/60 hover:text-red-500 transition-all">
+        <button 
+          onClick={() => logout()}
+          className="flex items-center space-x-4 px-6 py-4 text-red-500/60 hover:text-red-500 transition-all"
+        >
           <LogOut size={20} />
           <span className="text-xs font-black uppercase tracking-widest">Authorize Exit</span>
         </button>
@@ -92,8 +146,10 @@ export default function SchoolDashboard() {
       <main className="flex-1 p-12 overflow-y-auto z-10 relative">
         <header className="flex justify-between items-end mb-16">
           <div className="space-y-2">
-            <h1 className="text-5xl font-black tracking-tighter uppercase leading-none">Institutional <br /><span className="text-blue-500">Dashboard.</span></h1>
-            <p className="text-gray-500 text-sm font-bold uppercase tracking-[0.2em] ml-1">St. Mary's Academy Portal</p>
+            <h1 className="text-5xl font-black tracking-tighter uppercase leading-none truncate max-w-xl">
+              {school.schoolName} <br /><span className="text-blue-500">Dashboard.</span>
+            </h1>
+            <p className="text-gray-500 text-sm font-bold uppercase tracking-[0.2em] ml-1">Institutional Portal</p>
           </div>
           
           {exportResult && (
@@ -134,32 +190,36 @@ export default function SchoolDashboard() {
                 <h2 className="text-2xl font-black uppercase tracking-tighter">Class Performance Entry</h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Entry Date</label>
-                  <input type="date" className="premium-input w-full p-6 rounded-[2rem] text-sm" />
+              <form onSubmit={handleFormSubmit} className="space-y-10">
+                <div className="grid grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Entry Date</label>
+                    <input name="date" type="date" required className="premium-input w-full p-6 rounded-[2rem] text-sm" />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Total Attendance</label>
+                    <input name="attendanceCount" type="number" required placeholder="0" className="premium-input w-full p-6 rounded-[2rem] text-sm" />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Workbook Chapter</label>
+                    <input name="workbookChapter" type="text" required placeholder="e.g. Chapter 4" className="premium-input w-full p-6 rounded-[2rem] text-sm font-bold" />
+                  </div>
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Pages Covered</label>
+                    <input name="workbookPages" type="text" required placeholder="e.g. 112 - 120" className="premium-input w-full p-6 rounded-[2rem] text-sm font-bold" />
+                  </div>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Total Attendance</label>
-                  <input type="number" placeholder="0" className="premium-input w-full p-6 rounded-[2rem] text-sm" />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Workbook Chapter</label>
-                  <input type="text" placeholder="e.g. Chapter 4" className="premium-input w-full p-6 rounded-[2rem] text-sm font-bold" />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-600 ml-4">Pages Covered</label>
-                  <input type="text" placeholder="e.g. 112 - 120" className="premium-input w-full p-6 rounded-[2rem] text-sm font-bold" />
-                </div>
-              </div>
 
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="premium-btn w-full py-7 rounded-[2.5rem] mt-6 uppercase text-base"
-              >
-                Submit Performance Data
-              </motion.button>
+                <motion.button 
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={submitting}
+                  type="submit"
+                  className="premium-btn w-full py-7 rounded-[2.5rem] mt-6 uppercase text-base disabled:opacity-50"
+                >
+                  {submitting ? "Processing Entry..." : "Submit Performance Data"}
+                </motion.button>
+              </form>
             </div>
           </motion.div>
         ) : (
@@ -176,27 +236,35 @@ export default function SchoolDashboard() {
                     <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Attendance</th>
                     <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Chapter</th>
                     <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest">Pages Covered</th>
-                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Verification</th>
+                    <th className="px-10 py-8 text-[10px] font-black text-gray-500 uppercase tracking-widest text-right">Integrity</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/[0.03]">
-                  {[1, 2, 3, 4].map((i) => (
-                    <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-10 py-8 text-sm font-bold text-gray-300 tracking-tight">OCT {10 + i}, 2023</td>
-                      <td className="px-10 py-8">
-                        <span className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/10">
-                          {20 + i * 2} Units
-                        </span>
-                      </td>
-                      <td className="px-10 py-8 text-sm font-black text-white uppercase tracking-tighter">Chapter {i + 3}</td>
-                      <td className="px-10 py-8 text-sm font-mono text-gray-400">{100 + i * 10} - {115 + i * 10}</td>
-                      <td className="px-10 py-8 text-right">
-                        <button className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-500 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                          <ChevronRight size={18} />
-                        </button>
+                  {school.attendanceEntries.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="px-10 py-20 text-center text-gray-500 font-bold uppercase tracking-widest">
+                        No performance records found for this institution.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    school.attendanceEntries.map((entry: any) => (
+                      <tr key={entry.id} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="px-10 py-8 text-sm font-bold text-gray-300 tracking-tight uppercase">
+                          {new Date(entry.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </td>
+                        <td className="px-10 py-8">
+                          <span className="bg-blue-500/10 text-blue-400 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-500/10">
+                            {entry.attendanceCount} Units
+                          </span>
+                        </td>
+                        <td className="px-10 py-8 text-sm font-black text-white uppercase tracking-tighter">{entry.workbookChapter}</td>
+                        <td className="px-10 py-8 text-sm font-mono text-gray-400">{entry.workbookPages}</td>
+                        <td className="px-10 py-8 text-right">
+                          <span className="text-[9px] font-black px-4 py-2 rounded-full border border-emerald-500/20 text-emerald-500 bg-emerald-500/5 uppercase tracking-widest">Verified</span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

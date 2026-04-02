@@ -2,6 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export async function registerSchool(formData: FormData) {
   const schoolName = formData.get("schoolName") as string;
@@ -12,13 +13,13 @@ export async function registerSchool(formData: FormData) {
     throw new Error("Missing fields");
   }
 
+  let user;
   try {
-    // Basic implementation (password should be hashed in production!)
-    const user = await prisma.user.create({
+    user = await prisma.user.create({
       data: {
         schoolName,
         email,
-        password, // TODO: Use bcrypt to hash passwords
+        password, 
         role: "SCHOOL",
       },
     });
@@ -28,6 +29,15 @@ export async function registerSchool(formData: FormData) {
     console.error("Registration error:", error);
     throw new Error("Email already exists or registration failed");
   }
+
+  // Set session cookie
+  const cookieStore = await cookies();
+  cookieStore.set("school_session", user.id, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 60 * 60 * 24 * 7, // 1 week
+    path: "/",
+  });
 
   // Redirect to school dashboard after successful registration
   redirect("/dashboard/school");
