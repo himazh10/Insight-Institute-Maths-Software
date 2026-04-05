@@ -8,11 +8,13 @@ const SCOPES = [
   "https://www.googleapis.com/auth/documents",
 ];
 
-const KEY_FILE_PATH = path.join(process.cwd(), "service-account.json");
-
 export async function getGoogleAuthClient() {
+  const credentials = process.env.GOOGLE_SERVICE_ACCOUNT_JSON
+    ? JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON)
+    : undefined;
+
   const auth = new google.auth.GoogleAuth({
-    keyFile: KEY_FILE_PATH,
+    credentials,
     scopes: SCOPES,
   });
   return auth;
